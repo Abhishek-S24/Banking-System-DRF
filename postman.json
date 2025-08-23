@@ -1,0 +1,250 @@
+{
+  "info": {
+    "name": "Banking System API",
+    "_postman_id": "banking-system-api-002",
+    "description": "Postman collection for Users, Roles, Accounts, Transactions APIs",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "User APIs",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"john_doe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"password123\",\n  \"roles\": []\n}"
+            },
+            "url": {"raw": "{{base_url}}/api/user/register/", "host": ["{{base_url}}"], "path": ["api", "user", "register"]}
+          }
+        },
+        {
+          "name": "Login (Get OTP)",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"username\": \"john_doe\",\n  \"password\": \"password123\"\n}"},
+            "url": {"raw": "{{base_url}}/api/user/login/", "host": ["{{base_url}}"], "path": ["api", "user", "login"]}
+          }
+        },
+        {
+          "name": "Verify OTP",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"username\": \"john_doe\",\n  \"otp\": \"123456\"\n}"},
+            "url": {"raw": "{{base_url}}/api/user/verify-otp/", "host": ["{{base_url}}"], "path": ["api", "user", "verify-otp"]}
+          }
+        },
+        {
+          "name": "Get Users List",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}],
+            "url": {"raw": "{{base_url}}/api/user/", "host": ["{{base_url}}"], "path": ["api", "user"]}
+          }
+        },
+        {
+          "name": "Get User by Email",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}],
+            "url": {"raw": "{{base_url}}/api/user/{{email}}/", "host": ["{{base_url}}"], "path": ["api", "user", "{{email}}"]}
+          }
+        },
+        {
+          "name": "Update User (PUT)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{access_token}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {"mode": "raw", "raw": "{\n  \"username\": \"john_doe\",\n  \"email\": \"john@example.com\",\n  \"roles\": []\n}"},
+            "url": {"raw": "{{base_url}}/api/user/{{email}}/", "host": ["{{base_url}}"], "path": ["api", "user", "{{email}}"]}
+          }
+        },
+        {
+          "name": "Deactivate User",
+          "request": {
+            "method": "DELETE",
+            "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}],
+            "url": {"raw": "{{base_url}}/api/user/{{email}}/", "host": ["{{base_url}}"], "path": ["api", "user", "{{email}}"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "Bank Account APIs",
+      "item": [
+        {
+          "name": "Create Bank Account",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{access_token}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {"mode": "raw", "raw": "{\n  \"account_type\": \"SAVINGS\"\n}"},
+            "url": {"raw": "{{base_url}}/api/accounts/create/", "host": ["{{base_url}}"], "path": ["api", "accounts", "create"]}
+          }
+        },
+        {
+          "name": "List Bank Accounts",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}],
+            "url": {"raw": "{{base_url}}/api/accounts/", "host": ["{{base_url}}"], "path": ["api", "accounts"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "Transaction APIs",
+      "item": [
+        {
+          "name": "Deposit",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{access_token}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {"mode": "raw", "raw": "{\n  \"account\": \"123456789012\",\n  \"amount\": 1000\n}"},
+            "url": {"raw": "{{base_url}}/api/transactions/deposit/", "host": ["{{base_url}}"], "path": ["api", "transactions", "deposit"]}
+          }
+        },
+        {
+          "name": "Withdraw",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{access_token}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {"mode": "raw", "raw": "{\n  \"account\": \"123456789012\",\n  \"amount\": 500\n}"},
+            "url": {"raw": "{{base_url}}/api/transactions/withdraw/", "host": ["{{base_url}}"], "path": ["api", "transactions", "withdraw"]}
+          }
+        },
+        {
+          "name": "Transfer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{access_token}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {"mode": "raw", "raw": "{\n  \"from_account\": \"123456789012\",\n  \"to_account\": \"987654321098\",\n  \"amount\": 200\n}"},
+            "url": {"raw": "{{base_url}}/api/transactions/transfer/", "host": ["{{base_url}}"], "path": ["api", "transactions", "transfer"]}
+          }
+        },
+        {
+          "name": "Transaction History",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}],
+            "url": {
+              "raw": "{{base_url}}/api/transactions/history/?account=123456789012&start_date=2025-08-01&end_date=2025-08-31&type=deposit",
+              "host": ["{{base_url}}"],
+              "path": ["api", "transactions", "history"],
+              "query": [
+                {"key": "account", "value": "123456789012"},
+                {"key": "start_date", "value": "2025-08-01"},
+                {"key": "end_date", "value": "2025-08-31"},
+                {"key": "type", "value": "deposit"}
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Roles & Permissions APIs",
+      "item": [
+        {
+          "name": "Get Roles",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}],
+            "url": {"raw": "{{base_url}}/api/roles/", "host": ["{{base_url}}"], "path": ["api", "roles"]}
+          }
+        },
+        {
+          "name": "Create Role",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{access_token}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {"mode": "raw", "raw": "{\n  \"name\": \"Admin\",\n  \"user_permissions\": []\n}"},
+            "url": {"raw": "{{base_url}}/api/roles/", "host": ["{{base_url}}"], "path": ["api", "roles"]}
+          }
+        },
+        {
+          "name": "Update Role",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{access_token}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {"mode": "raw", "raw": "{\n  \"name\": \"Admin\",\n  \"user_permissions\": []\n}"},
+            "url": {"raw": "{{base_url}}/api/roles/{{name}}/", "host": ["{{base_url}}"], "path": ["api", "roles", "{{name}}"]}
+          }
+        },
+        {
+          "name": "Delete Role",
+          "request": {
+            "method": "DELETE",
+            "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}],
+            "url": {"raw": "{{base_url}}/api/roles/{{name}}/", "host": ["{{base_url}}"], "path": ["api", "roles", "{{name}}"]}
+          }
+        },
+        {
+          "name": "Get Permissions",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}],
+            "url": {"raw": "{{base_url}}/api/permissions/", "host": ["{{base_url}}"], "path": ["api", "permissions"]}
+          }
+        },
+        {
+          "name": "Create Permission",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{access_token}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {"mode": "raw", "raw": "{\n  \"code\": \"view_transactions\",\n  \"description\": \"View all transactions\"\n}"},
+            "url": {"raw": "{{base_url}}/api/permissions/", "host": ["{{base_url}}"], "path": ["api", "permissions"]}
+          }
+        },
+        {
+          "name": "Update Permission",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{access_token}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {"mode": "raw", "raw": "{\n  \"code\": \"view_transactions\",\n  \"description\": \"View all transactions\"\n}"},
+            "url": {"raw": "{{base_url}}/api/permissions/{{code}}/", "host": ["{{base_url}}"], "path": ["api", "permissions", "{{code}}"]}
+          }
+        },
+        {
+          "name": "Delete Permission",
+          "request": {
+            "method": "DELETE",
+            "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}],
+            "url": {"raw": "{{base_url}}/api/permissions/{{code}}/", "host": ["{{base_url}}"], "path": ["api", "permissions", "{{code}}"]}
+          }
+        }
+      ]
+    }
+  ]
+}

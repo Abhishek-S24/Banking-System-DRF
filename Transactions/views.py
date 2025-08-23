@@ -8,6 +8,9 @@ from rest_framework.exceptions import PermissionDenied
 
 from django.shortcuts import get_object_or_404
 
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
+
 from Accounts.models import BankAccount
 from .models import Transaction
 from .serializers import TransactionSerializer
@@ -23,11 +26,20 @@ def convert_currency(amount, from_currency, to_currency):
     converted_amount = data['result'] * 1.01  # Apply 1% spread
     return round(converted_amount, 2)
 
-from rest_framework.exceptions import PermissionDenied
-from rest_framework.permissions import IsAuthenticated
-
 class DepositView(APIView):
     permission_classes = [IsAuthenticated]
+    @swagger_auto_schema(
+        operation_description="Deposit money into a user's bank account",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['account', 'amount'],
+            properties={
+                'account': openapi.Schema(type=openapi.TYPE_STRING, description='Account number to deposit into'),
+                'amount': openapi.Schema(type=openapi.TYPE_NUMBER, description='Amount to deposit'),
+            },
+        ),
+        responses={201: openapi.Response("Transaction created", TransactionSerializer)}
+    )
 
     def post(self, request):
         try:
@@ -54,11 +66,21 @@ class DepositView(APIView):
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
-
 class WithdrawView(APIView):
     permission_classes = [IsAuthenticated]
-
+    
+    @swagger_auto_schema(
+        operation_description="Withdraw money from a user's bank account",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['account', 'amount'],
+            properties={
+                'account': openapi.Schema(type=openapi.TYPE_STRING, description='Account number to withdraw from'),
+                'amount': openapi.Schema(type=openapi.TYPE_NUMBER, description='Amount to withdraw'),
+            },
+        ),
+        responses={201: openapi.Response("Transaction created", TransactionSerializer)}
+    )
     def post(self, request):
         try:
             user = request.user
@@ -90,6 +112,19 @@ class WithdrawView(APIView):
 class TransferView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @swagger_auto_schema(
+        operation_description="Transfer money between two accounts",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['from_account', 'to_account', 'amount'],
+            properties={
+                'from_account': openapi.Schema(type=openapi.TYPE_STRING, description='Source account number'),
+                'to_account': openapi.Schema(type=openapi.TYPE_STRING, description='Destination account number'),
+                'amount': openapi.Schema(type=openapi.TYPE_NUMBER, description='Amount to transfer'),
+            },
+        ),
+        responses={201: openapi.Response("Transaction created", TransactionSerializer)}
+    )
     def post(self, request):
         try:
             user = request.user
@@ -133,31 +168,68 @@ class TransferView(APIView):
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-from django.utils.dateparse import parse_datetime
-
 class TransactionHistoryView(APIView):
     permission_classes = [IsAuthenticated]
+    @swagger_auto_schema(
+        operation_description="Get transaction history for a specific account",
+        manual_parameters=[
+            openapi.Parameter('account', openapi.IN_QUERY, description="Bank account ID", type=openapi.TYPE_STRING, required=True),
+            openapi.Parameter('start_date', openapi.IN_QUERY, description="Start date (YYYY-MM-DD)", type=openapi.TYPE_STRING),
+            openapi.Parameter('end_date', openapi.IN_QUERY, description="End date (YYYY-MM-DD)", type=openapi.TYPE_STRING),
+            openapi.Parameter('type', openapi.IN_QUERY, description="Filter by transaction type: deposit, withdraw, transfer", type=openapi.TYPE_STRING),
+            openapi.Parameter('count', openapi.IN_QUERY, description="Number of items per page", type=openapi.TYPE_INTEGER),
+            openapi.Parameter('page', openapi.IN_QUERY, description="Page number", type=openapi.TYPE_INTEGER),
+        ],
+        responses={200: openapi.Response("Transaction list", TransactionSerializer(many=True))}
+    )
 
     def get(self, request):
-        account_id = request.query_params.get('account')
-        start_date = request.query_params.get('start_date')
-        end_date = request.query_params.get('end_date')
-        transaction_type = request.query_params.get('type')  # e.g., deposit, withdraw, transfer
+        try:
+            data = request.GET
+            account_id = data.get('account')
+            start_date = data.get('start_date')
+            end_date = data.get('end_date')
+            transaction_type = data.get('type')  # e.g., deposit, withdraw, transfer
+            count = int(data.get("count", 0))
+            page = int(data.get("page", 0))
 
-        account = get_object_or_404(BankAccount, id=account_id, user=request.user)
+            offset = count * page if count else 0
 
-        transactions = Transaction.objects.filter(account=account)
+            account = get_object_or_404(BankAccount, id=account_id, user=request.user)
 
-        if start_date:
-            transactions = transactions.filter(timestamp__gte=start_date)
-        if end_date:
-            transactions = transactions.filter(timestamp__lte=end_date)
+            transactions = Transaction.objects.filter(account=account)
 
-        # filter by transaction type
-        if transaction_type:
-            transactions = transactions.filter(transaction_type__iexact=transaction_type)
+            if start_date:
+                transactions = transactions.filter(timestamp__gte=start_date)
+            if end_date:
+                transactions = transactions.filter(timestamp__lte=end_date)
 
-        transactions = transactions.order_by('-timestamp')
+            # filter by transaction type
+            if transaction_type:
+                transactions = transactions.filter(transaction_type__iexact=transaction_type)
+            
+            total_count = transactions.count()
 
-        serializer = TransactionSerializer(transactions, many=True)
-        return Response(serializer.data)
+            transactions = transactions.order_by('-timestamp')
+
+            if count:
+                page_end = offset + count
+                transactions = transactions[offset:page_end]
+                if page_end > total_count:
+                    page_end = total_count
+            else:
+                page_end = total_count
+
+
+            serializer = TransactionSerializer(transactions, many=True)
+            return Response(
+                    {
+                        "data": serializer,
+                        "pageStart": offset + 1 if len(serializer) else 0,
+                        "pageEnd": page_end,
+                        "totalCount": total_count,
+                    }
+                )
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            

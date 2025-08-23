@@ -4,7 +4,7 @@ from .models import BankAccount
 class BankAccountSerializer(serializers.ModelSerializer):
     class Meta:
         model = BankAccount
-        fields = ['id', 'user', 'account_number', 'balance', 'account_type', 'created_at', 'updated_at']
+        fields = [ 'user', 'account_number', 'balance', 'account_type', 'created_at', 'updated_at']
         read_only_fields = ['balance', 'created_at', 'updated_at', 'account_number']
 
     def create(self, validated_data):

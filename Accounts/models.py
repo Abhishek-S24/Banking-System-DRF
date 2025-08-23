@@ -1,7 +1,9 @@
+import random
+
 from django.db import models
 from django.utils import timezone
 
-from Auth.models import User
+from Users.models import User
 class BankAccount(models.Model):
     ACCOUNT_TYPES = [
         ('SAVINGS', 'Savings'),
@@ -24,3 +26,4 @@ class BankAccount(models.Model):
 
     def __str__(self):
         return f"{self.account_number} ({self.user.username})"
+    

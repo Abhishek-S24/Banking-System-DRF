@@ -1,10 +1,11 @@
 from rest_framework import serializers
-from .models import User, Role
+from .models import User
+from Roles.models import UserRole
 
 class UserSerializer(serializers.ModelSerializer):
     roles = serializers.PrimaryKeyRelatedField(
         many=True,
-        queryset=Role.objects.all()
+        queryset=UserRole.objects.all()
     )
 
     class Meta:
@@ -13,7 +14,7 @@ class UserSerializer(serializers.ModelSerializer):
             "id",
             "username",
             "email",
-            "timezone",
+            "user_timezone",
             "roles",
             "active",
             "frozen",
