@@ -1,4 +1,5 @@
 import requests
+from io import BytesIO
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -7,13 +8,16 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import PermissionDenied
 
 from django.shortcuts import get_object_or_404
+from django.http import HttpResponse
 
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 
+import polars as pl
+
 from Accounts.models import BankAccount
 from .models import Transaction
-from .serializers import TransactionSerializer
+from .serializers import TransactionSerializer , TransactionFlatSerializer
 
 
 def convert_currency(amount, from_currency, to_currency):
@@ -232,4 +236,102 @@ class TransactionHistoryView(APIView):
                 )
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            
+
+
+class ViewAllTransactions(APIView):
+    permission_classes = [IsAuthenticated] 
+    @swagger_auto_schema(
+        operation_description="Get transaction history (JSON or Excel if ?excel=true)",
+        manual_parameters=[
+            openapi.Parameter('account', openapi.IN_QUERY, description="Bank account number (optional)", type=openapi.TYPE_STRING),
+            openapi.Parameter('start_date', openapi.IN_QUERY, description="Start date (YYYY-MM-DD)", type=openapi.TYPE_STRING),
+            openapi.Parameter('end_date', openapi.IN_QUERY, description="End date (YYYY-MM-DD)", type=openapi.TYPE_STRING),
+            openapi.Parameter('type', openapi.IN_QUERY, description="Filter by transaction type: DEPOSIT, WITHDRAW, TRANSFER", type=openapi.TYPE_STRING),
+            openapi.Parameter('count', openapi.IN_QUERY, description="Number of items per page", type=openapi.TYPE_INTEGER),
+            openapi.Parameter('page', openapi.IN_QUERY, description="Page number (starting from 0)", type=openapi.TYPE_INTEGER),
+            openapi.Parameter('excel', openapi.IN_QUERY, description="Export as Excel if true", type=openapi.TYPE_BOOLEAN),
+        ],
+        responses={200: openapi.Response("Transaction list", TransactionFlatSerializer(many=True))}
+    )
+    def get(self, request):
+            try:
+                data = request.GET
+                account_id = data.get("account")
+                start_date = data.get("start_date")
+                end_date = data.get("end_date")
+                transaction_type = data.get("type")
+                count = int(data.get("count", 0))
+                page = int(data.get("page", 0))
+                excel = data.get('excel' , None)
+
+                offset = count * page if count else 0
+
+                if not request.user.has_permission("view_all_transactions"):
+                    return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
+
+                transactions = Transaction.objects.all()
+
+                if account_id:
+                    transactions = transactions.filter(account__account_number=account_id)
+
+                if start_date:
+                    transactions = transactions.filter(timestamp__date__gte=start_date)
+                if end_date:
+                    transactions = transactions.filter(timestamp__date__lte=end_date)
+
+                if transaction_type:
+                    transactions = transactions.filter(transaction_type__iexact=transaction_type)
+
+                total_count = transactions.count()
+                transactions = transactions.order_by("-timestamp")
+
+                if count:
+                    page_end = offset + count
+                    transactions = transactions[offset:page_end]
+                    if page_end > total_count:
+                        page_end = total_count
+                else:
+                    page_end = total_count
+
+                serializer = TransactionFlatSerializer(transactions, many=True)
+                if excel:
+                    cleaned_array = serializer.data
+
+                    if cleaned_array:
+                        pretty_headers = {
+                            k: k.replace("_", " ").title()
+                            for k in cleaned_array[0].keys()
+                        }
+                        transformed = [
+                            {pretty_headers[k]: v for k, v in row.items()}
+                            for row in cleaned_array
+                        ]
+                    else:
+                        transformed = []
+
+                    df = pl.DataFrame(transformed)
+                    buffer = BytesIO()
+                    df.write_excel(workbook=buffer, autofit=True)
+                    buffer.seek(0)
+
+                    response = HttpResponse(
+                        buffer.getvalue(),
+                        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    )
+                    response["Content-Disposition"] = 'attachment; filename="transactions.xlsx"'
+                    return response
+
+                return Response(
+                    {
+                        "data": serializer.data,
+                        "pageStart": offset + 1 if serializer.data else 0,
+                        "pageEnd": page_end,
+                        "totalCount": total_count,
+                    },
+                    status=status.HTTP_200_OK,
+                )
+
+            except Exception as e:
+                return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    

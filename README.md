@@ -63,21 +63,21 @@ This project was developed as part of an assignment aimed at building a feature-
 ```plaintext
 +---------------------+       +---------------------+       +----------------------+
 |      Frontend       | <---> |       API Layer     | <---> |    Django Backend    |
-| (Postman / Swagger) |       | Django REST Framework|       |  Models, Serializers |
+| (Postman / Swagger) |       | Django REST Framework|      |  Models, Serializers |
 +---------------------+       +---------------------+       +----------------------+
                                        |
                                        v
-                             +--------------------+
-                             | Database (SQLite / |
-                             | PostgreSQL / MySQL)|
-                             +--------------------+
-                                       |
-                                       v
-                             +--------------------+
-                             | External Services  |
-                             |  - OTP Provider    |
-                             |  - ExchangeRatesAPI|
-                             +--------------------+
+                                +--------------------+
+                                | Database (SQLite / |
+                                | PostgreSQL / MySQL)|
+                                +--------------------+
+                                        |
+                                        v
+                                +--------------------+
+                                | External Services  |
+                                |                    |
+                                |  ExchangeRatesAPI  |
+                                +--------------------+
 ```
 - Frontend / API Testing: Postman collection or Swagger UI.
 
@@ -87,7 +87,7 @@ This project was developed as part of an assignment aimed at building a feature-
 
 - Database: Stores user data, account information, transactions, roles, and permissions.
 
-- External Services: OTP service for 2FA and currency exchange API for multi-currency transfers.
+- External Services: Currency exchange API for multi-currency transfers.
 
 ## Installation
 Using Docker (Recommended)
@@ -176,18 +176,13 @@ python manage.py test Roles
 
 ## Achievements / Assignment Highlights
 
-- Fully functional banking system with REST API endpoints.
-
-- Dynamic user roles and permissions management.
-
-- External and multi-currency fund transfers with real-time conversion rates.
-
-- Security measures including OTP-based 2FA.
-
-- Optimized for performance and data-heavy analytical tables.
-
-- Dockerized setup for easy installation and deployment.
-
-- Complete unit and integration testing implemented.
-
-- API documentation available via Swagger and Postman collection.
+- **Complete Banking System** – End-to-end REST API implementation for core banking operations.  
+- **Role-Based Access Control** – Dynamic user roles and permissions management.  
+- **Multi-Currency Transactions** – Support for external and inter-account transfers with real-time currency conversion.  
+- **Enhanced Security** – OTP-based two-factor authentication (2FA) for sensitive operations.  
+- **High Performance** – Pagination implemented for data-heavy transaction and analytics tables.  
+- **Comprehensive Logging** – Middleware-based activity logging per action type, including user login and transaction activities.  
+- **Excel Export** – Transaction history can be exported directly as Excel files for reporting and analysis.  
+- **Containerized Deployment** – Dockerized setup for seamless installation and deployment.  
+- **Reliable Testing** – Full coverage with unit and integration tests.  
+- **API Documentation** – Available via Swagger UI and Postman collection for easy exploration.  
