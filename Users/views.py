@@ -5,6 +5,7 @@ from django.contrib.auth import authenticate
 from django.core.mail import send_mail
 from django.core.cache import cache
 from django.shortcuts import get_object_or_404
+from django.db import transaction
 
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -248,5 +249,65 @@ class UserView(APIView):
             user.active = False
             user.save()
             return Response({"detail": "User deactivated"}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class BulkUserCreateView(APIView):
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                "users": openapi.Schema(
+                    type=openapi.TYPE_ARRAY,
+                    items=openapi.Items(
+                        type=openapi.TYPE_OBJECT,
+                        properties={
+                            "username": openapi.Schema(type=openapi.TYPE_STRING),
+                            "email": openapi.Schema(type=openapi.TYPE_STRING),
+                            "password": openapi.Schema(type=openapi.TYPE_STRING),
+                        },
+                        required=["username", "email", "password"]
+                    )
+                )
+            },
+            required=["users"]
+        ),
+        responses={201: "Users created successfully", 400: "Validation error"}
+    )
+    def post(self, request):
+        users_data = request.data.get("users", [])
+        if not users_data:
+            return Response({"error": "No users provided"}, status=status.HTTP_400_BAD_REQUEST)
+
+        created_users = []
+        errors = []
+
+        try:
+            with transaction.atomic():
+                for idx, user_data in enumerate(users_data, start=1):
+                    username = user_data.get("username")
+                    email = user_data.get("email")
+                    password = user_data.get("password")
+
+                    if not username or not email or not password:
+                        errors.append({"row": idx, "error": "Missing required fields"})
+                        continue
+
+                    if User.objects.filter(username=username).exists():
+                        errors.append({"row": idx, "error": f"Username '{username}' already exists"})
+                        continue
+
+                    if User.objects.filter(email=email).exists():
+                        errors.append({"row": idx, "error": f"Email '{email}' already exists"})
+                        continue
+
+                    user = User.objects.create_user(username=username, email=email, password=password)
+                    created_users.append({"id": user.id, "username": user.username, "email": user.email})
+
+            return Response({
+                "created_users": created_users,
+                "errors": errors
+            }, status=status.HTTP_201_CREATED)
+
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
