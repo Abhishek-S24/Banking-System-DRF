@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -26,6 +27,73 @@ SECRET_KEY = 'django-insecure-=0awh5ea52#3jff7r!u4326nb(-54b97cd+*r1lh^q901j)v3c
 DEBUG = True
 
 ALLOWED_HOSTS = []
+
+# Log definition
+
+LOG_DIR = os.path.join(BASE_DIR, "logs")
+os.makedirs(LOG_DIR, exist_ok=True)
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+
+    "formatters": {
+        "verbose": {
+            "format": "[{asctime}] {levelname} {name} {message}",
+            "style": "{",
+        },
+    },
+
+    "handlers": {
+        "login_file": {
+            "level": "INFO",
+            "class": "logging.FileHandler",
+            "filename": os.path.join(LOG_DIR, "login.log"),
+            "formatter": "verbose",
+        },
+        "user_file": {
+            "level": "INFO",
+            "class": "logging.FileHandler",
+            "filename": os.path.join(LOG_DIR, "user.log"),
+            "formatter": "verbose",
+        },
+        "roles_file": {
+            "level": "INFO",
+            "class": "logging.FileHandler",
+            "filename": os.path.join(LOG_DIR, "roles.log"),
+            "formatter": "verbose",
+        },
+        "accounts_file": {
+            "level": "INFO",
+            "class": "logging.FileHandler",
+            "filename": os.path.join(LOG_DIR, "accounts.log"),
+            "formatter": "verbose",
+        },
+        "transactions_file": {
+            "level": "INFO",
+            "class": "logging.FileHandler",
+            "filename": os.path.join(LOG_DIR, "transactions.log"),
+            "formatter": "verbose",
+        },
+        "default_file": {
+            "level": "INFO",
+            "class": "logging.FileHandler",
+            "filename": os.path.join(LOG_DIR, "default.log"),
+            "formatter": "verbose",
+        },
+    },
+
+    "loggers": {
+        "login": {"handlers": ["login_file"], "level": "INFO", "propagate": False},
+        "users": {"handlers": ["user_file"], "level": "INFO", "propagate": False},
+        "roles": {"handlers": ["roles_file"], "level": "INFO", "propagate": False},
+        "accounts": {"handlers": ["accounts_file"], "level": "INFO", "propagate": False},
+        "transactions": {"handlers": ["transactions_file"], "level": "INFO", "propagate": False},
+        "default": {"handlers": ["default_file"], "level": "INFO", "propagate": False},
+    },
+}
+
+
 
 
 # Application definition
