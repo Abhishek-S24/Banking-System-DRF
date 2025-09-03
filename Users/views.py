@@ -71,13 +71,15 @@ class LoginView(APIView):
                 return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
 
             otp = generate_otp(user.id) 
-
-            send_mail(
-                "Hey well come back",
-                f"Your login OTP is {otp} and it will be valid for 5 mins",
-                "noreply@bankingapp.com",
-                [user.email],
-            )
+            try:
+                send_mail(
+                    "Hey well come back",
+                    f"Your login OTP is {otp} and it will be valid for 5 mins",
+                    "noreply@bankingapp.com",
+                    [user.email],
+                )
+            except Exception as e:
+                print(otp)
 
             return Response({"message": "OTP sent to your email. Verify to complete login."})
         except Exception as e:
