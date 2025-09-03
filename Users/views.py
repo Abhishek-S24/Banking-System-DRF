@@ -124,6 +124,9 @@ class RegisterView(APIView):
                 'username': openapi.Schema(type=openapi.TYPE_STRING),
                 'email': openapi.Schema(type=openapi.TYPE_STRING),
                 'password': openapi.Schema(type=openapi.TYPE_STRING),
+                'roles' : openapi.Schema(type=openapi.TYPE_ARRAY, 
+                    items=openapi.Items(type=openapi.TYPE_STRING),
+                    description='List of roles for the user (e.g., ["Admin", "Customer", "Service Executive", "Auditor"]')
             },
             required=['username', 'email', 'password']
         ),
