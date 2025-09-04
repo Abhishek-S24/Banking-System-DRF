@@ -1,5 +1,6 @@
 import requests
 from io import BytesIO
+from decimal import Decimal
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -52,7 +53,7 @@ class DepositView(APIView):
                 raise PermissionDenied("Your account is inactive or frozen.")
 
             account_number = request.data.get('account')
-            amount = float(request.data.get('amount', 0))
+            amount = Decimal(request.data.get('amount', 0))
             account = get_object_or_404(BankAccount, account_number=account_number, user=request.user)
 
             if account.user != user:
@@ -92,7 +93,7 @@ class WithdrawView(APIView):
                 raise PermissionDenied("Your account is inactive or frozen.")
 
             account_number = request.data.get('account')
-            amount = float(request.data.get('amount', 0))
+            amount = Decimal(request.data.get('amount', 0))
             account = get_object_or_404(BankAccount, account_number=account_number, user=request.user)
 
             if account.user != user:
@@ -137,7 +138,7 @@ class TransferView(APIView):
 
             from_id = request.data.get('from_account')
             to_id = request.data.get('to_account')
-            amount = float(request.data.get('amount', 0))
+            amount = Decimal(request.data.get('amount', 0))
 
             from_account = get_object_or_404(BankAccount, account_number=from_id)
             to_account = get_object_or_404(BankAccount, account_number=to_id)
@@ -199,7 +200,7 @@ class TransactionHistoryView(APIView):
 
             offset = count * page if count else 0
 
-            account = get_object_or_404(BankAccount, id=account_id, user=request.user)
+            account = get_object_or_404(BankAccount, account_number=account_id, user=request.user)
 
             transactions = Transaction.objects.filter(account=account)
 
@@ -225,7 +226,7 @@ class TransactionHistoryView(APIView):
                 page_end = total_count
 
 
-            serializer = TransactionSerializer(transactions, many=True)
+            serializer = TransactionSerializer(transactions, many=True).data
             return Response(
                     {
                         "data": serializer,
